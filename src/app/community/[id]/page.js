@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { db, auth } from '../../../../lib/firebase'; // Pastikan path ini benar sesuai struktur foldermu
+// PERBAIKAN: Gunakan 3 titik (../../../) bukan 4
+import { db, auth } from '../../../lib/firebase'; 
 import { 
   collection, 
   addDoc, 
@@ -15,10 +16,11 @@ import {
   arrayUnion
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import Navbar from '../../../../components/Navbar'; // Sesuaikan path
+// PERBAIKAN: Gunakan 3 titik (../../../)
+import Navbar from '../../../components/Navbar'; 
 
 export default function CommunityPage() {
-  const params = useParams(); // Ambil ID dari URL
+  const params = useParams(); 
   const communityId = params.id;
   const router = useRouter();
 
@@ -26,7 +28,7 @@ export default function CommunityPage() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [communityData, setCommunityData] = useState(null);
-  const [isMember, setIsMember] = useState(false); // STATUS MEMBER
+  const [isMember, setIsMember] = useState(false); 
   const [loading, setLoading] = useState(true);
 
   const dummyDiv = useRef(null);
@@ -40,7 +42,6 @@ export default function CommunityPage() {
       }
       setUser(currentUser);
 
-      // Ambil Info Komunitas & Cek Member
       if (communityId) {
         const docRef = doc(db, "communities", communityId);
         const docSnap = await getDoc(docRef);
@@ -49,8 +50,6 @@ export default function CommunityPage() {
           const data = docSnap.data();
           setCommunityData(data);
           
-          // --- LOGIC SATPAM: Cek apakah user sudah jadi member ---
-          // Kita cek apakah array 'members' mengandung UID user
           if (data.members && data.members.includes(currentUser.uid)) {
             setIsMember(true);
           } else {
@@ -64,7 +63,7 @@ export default function CommunityPage() {
     return () => unsubscribeAuth();
   }, [communityId, router]);
 
-  // 2. Ambil Chat Realtime (Hanya Read)
+  // 2. Ambil Chat Realtime
   useEffect(() => {
     if (!communityId) return;
 
@@ -79,7 +78,6 @@ export default function CommunityPage() {
         ...doc.data()
       }));
       setMessages(msgs);
-      // Auto scroll ke bawah
       dummyDiv.current?.scrollIntoView({ behavior: 'smooth' });
     });
 
@@ -89,7 +87,7 @@ export default function CommunityPage() {
   // 3. Fungsi Kirim Pesan
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user || !isMember) return; // Proteksi ganda
+    if (!newMessage.trim() || !user || !isMember) return; 
 
     await addDoc(collection(db, "communities", communityId, "messages"), {
       text: newMessage,
@@ -102,19 +100,16 @@ export default function CommunityPage() {
     setNewMessage('');
   };
 
-  // 4. Fungsi GABUNG KOMUNITAS (JOIN)
+  // 4. Fungsi Join
   const handleJoinCommunity = async () => {
     if (!user) return;
 
     try {
       const communityRef = doc(db, "communities", communityId);
-      
-      // Update database: Tambahkan UID user ke dalam array 'members'
       await updateDoc(communityRef, {
         members: arrayUnion(user.uid)
       });
-
-      setIsMember(true); // Update state lokal jadi member
+      setIsMember(true); 
       alert("Berhasil bergabung! Sekarang kamu bisa chat.");
     } catch (error) {
       console.error("Gagal join:", error);
@@ -128,7 +123,6 @@ export default function CommunityPage() {
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
       <Navbar />
 
-      {/* Header Komunitas */}
       <div className="bg-gray-800 p-6 shadow-md border-b border-gray-700 mt-16">
         <h1 className="text-2xl font-bold text-blue-400">
           {communityData?.name || "Nama Komunitas"}
@@ -141,7 +135,6 @@ export default function CommunityPage() {
         </div>
       </div>
 
-      {/* Area Chat */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900">
         {messages.map((msg) => (
           <div 
@@ -163,10 +156,8 @@ export default function CommunityPage() {
         <div ref={dummyDiv}></div>
       </div>
 
-      {/* Footer: Input Chat ATAU Tombol Join */}
       <div className="p-4 bg-gray-800 border-t border-gray-700">
         {isMember ? (
-          // JIKA SUDAH MEMBER: Tampilkan Input Chat
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <input
               type="text"
@@ -183,7 +174,6 @@ export default function CommunityPage() {
             </button>
           </form>
         ) : (
-          // JIKA BELUM MEMBER: Tampilkan Tombol Join
           <div className="text-center">
             <p className="mb-3 text-gray-400 text-sm">
               Kamu harus bergabung dengan komunitas ini untuk mulai mengobrol.
